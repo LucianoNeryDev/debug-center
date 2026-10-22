@@ -1,0 +1,71 @@
+# Vets, tests and cross-builds dbc-agent and dbc on every push and pull
+# request. Each run keeps the binaries on its run page as three artifacts (one
+# per OS, each with SHA256SUMS); a v* tag also publishes them as a release.
+# Optional repository variables DBC_CONTROL_URL, DBC_ALLOW_PEERS and
+# DBC_AGENT_TAGS are baked into the agent (see scripts/build.sh). The binaries
+# are public, so never bake a pre-auth key into them.
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: docker
+    timeout-minutes: 60
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+        with:
+          # git describe needs the tags for the version string.
+          fetch-depth: 0
+
+      - uses: https://code.forgejo.org/actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Vet and test
+        run: |
+          go vet ./...
+          go test ./...
+
+      - name: Build
+        env:
+          DBC_CONTROL_URL: ${{ vars.DBC_CONTROL_URL }}
+          DBC_ALLOW_PEERS: ${{ vars.DBC_ALLOW_PEERS }}
+          DBC_AGENT_TAGS: ${{ vars.DBC_AGENT_TAGS }}
+        run: |
+          version="$(git describe --tags --always --dirty)"
+          echo "VERSION=$version" >>"$GITHUB_ENV"
+          VERSION="$version" scripts/build.sh
+
+      - uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: debug-center-${{ env.VERSION }}-windows
+          path: |
+            dist/*-windows-*
+            dist/SHA256SUMS
+
+      - uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: debug-center-${{ env.VERSION }}-linux
+          path: |
+            dist/*-linux-*
+            dist/SHA256SUMS
+
+      - uses: https://code.forgejo.org/forgejo/upload-artifact@v4
+        with:
+          name: debug-center-${{ env.VERSION }}-macos
+          path: |
+            dist/*-darwin-*
+            dist/SHA256SUMS
+
+      - name: Publish the release
+        if: github.ref_type == 'tag'
+        uses: https://code.forgejo.org/actions/forgejo-release@v2
+        with:
+          direction: upload
+          release-dir: dist
+          release-notes: See CHANGELOG.md for what changed in ${{ github.ref_name }}.

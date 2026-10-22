@@ -14,17 +14,11 @@ customer one file, and services the machine with `dbc`.
   setting up the coordination server (Headscale) with tags, access rules and
   pre-auth keys; installing and removing the agent; using `dbc`; the security
   model; and troubleshooting. Architecture decisions recorded in `docs/adr/`.
-- **Build and release script.** Bake the coordination server, the allowed
-  technicians and the agent tags into the agent at build time, so a customer
-  only has to run it. Builds for Windows, Linux and macOS on amd64 and arm64,
-  with checksums.
 - **Field testing** against a real Headscale tailnet on Windows 10 and 11,
   common Linux distributions and macOS: install, remote uninstall and one-off
   sessions.
-- **Automated checks.** Continuous integration on Forgejo Actions (vet, tests,
-  cross-builds), and tests for the security-sensitive parts of the agent: who
-  is allowed in, how action arguments are quoted, command execution and file
-  transfer.
+- **Tests for the security-sensitive parts of the agent:** who is allowed in,
+  how action arguments are quoted, command execution and file transfer.
 - **Windows code signing**, so SmartScreen and antivirus software do not block
   the agent when a customer downloads it.
 
