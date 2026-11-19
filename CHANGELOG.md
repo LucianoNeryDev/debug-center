@@ -27,6 +27,7 @@ Notable changes to Debug Center, by version.
   as a release.
 - Tests for the agent's allowlist, command building, action argument quoting
   and audit log.
+- A README and contribution guide.
 
 ### Fixed
 
