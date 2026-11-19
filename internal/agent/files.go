@@ -25,7 +25,7 @@ func (s *Server) handleFileGet(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	s.record(r, "file.get", p)
+	_ = s.record(r, "file.get", p, true)
 	fi, err := os.Stat(p)
 	if err != nil {
 		writeErr(w, http.StatusNotFound, err.Error())
@@ -65,9 +65,18 @@ func (s *Server) handleFileGet(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleFilePut uploads the request body to path, replacing it atomically.
+// The upload is audited before anything on disk changes.
 func (s *Server) handleFilePut(w http.ResponseWriter, r *http.Request) {
 	p, ok := filePath(w, r)
 	if !ok {
+		return
+	}
+	detail := p
+	if r.ContentLength >= 0 {
+		detail += " (" + strconv.FormatInt(r.ContentLength, 10) + " bytes)"
+	}
+	if err := s.record(r, "file.put", detail, true); err != nil {
+		refuse(w, err)
 		return
 	}
 	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
@@ -91,6 +100,5 @@ func (s *Server) handleFilePut(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	s.record(r, "file.put", p+" ("+strconv.FormatInt(n, 10)+" bytes)")
 	writeJSON(w, map[string]int64{"bytes": n})
 }

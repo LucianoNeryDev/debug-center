@@ -10,15 +10,16 @@ support tailnet. This page lists what comes next, roughly in order.
 The goal of the first release: a technician sets up a tailnet, hands a
 customer one file, and services the machine with `dbc`.
 
-- **Documentation.** A README with a quick start, and guides in `docs/` for
-  setting up the coordination server (Headscale) with tags, access rules and
-  pre-auth keys; installing and removing the agent; using `dbc`; the security
-  model; and troubleshooting. Architecture decisions recorded in `docs/adr/`.
+- **Documentation.** Guides in `docs/` for setting up the coordination server
+  (Headscale) with tags, access rules and pre-auth keys; installing and
+  removing the agent; using `dbc`; the security model; and troubleshooting.
+  Architecture decisions recorded in `docs/adr/`.
 - **Field testing** against a real Headscale tailnet on Windows 10 and 11,
   common Linux distributions and macOS: install, remote uninstall and one-off
   sessions.
-- **Tests for the security-sensitive parts of the agent:** who is allowed in,
-  how action arguments are quoted, command execution and file transfer.
+- **More tests for the agent.** Who is allowed in, how commands and action
+  arguments are built, and the audit log are covered; streaming execution,
+  file transfer and the Windows quoting rules are next.
 - **Windows code signing**, so SmartScreen and antivirus software do not block
   the agent when a customer downloads it.
 

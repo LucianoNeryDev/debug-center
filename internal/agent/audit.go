@@ -3,6 +3,7 @@ package agent
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -19,20 +20,28 @@ type Audit struct {
 
 func NewAudit(path string) *Audit { return &Audit{path: path} }
 
-func (a *Audit) Log(e proto.AuditEntry) {
+// Log appends e, stamped with the current time. An error means the line was
+// not written: handlers that change the machine must then refuse the request.
+func (a *Audit) Log(e proto.AuditEntry) error {
 	e.Time = time.Now().UTC()
 	b, err := json.Marshal(e)
 	if err != nil {
-		return
+		return fmt.Errorf("audit: %w", err)
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	f, err := os.OpenFile(a.path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
-		return
+		return fmt.Errorf("audit: %w", err)
 	}
-	defer f.Close()
-	_, _ = f.Write(append(b, '\n'))
+	_, err = f.Write(append(b, '\n'))
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		return fmt.Errorf("audit: %w", err)
+	}
+	return nil
 }
 
 // Tail returns the last n entries.
