@@ -66,10 +66,10 @@ func allowed(allow []string, p Peer) bool {
 // The tailnet ACL is the first gate; this is the second.
 func (s *Server) authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		who, err := s.lc.WhoIs(r.Context(), r.RemoteAddr)
+		who, err := s.whois(r.Context(), r.RemoteAddr)
 		p := peerOf(who, r.RemoteAddr)
 		if err != nil || !allowed(s.cfg.AllowPeers, p) {
-			s.audit.Log(auditEntry(p, r.Method+" "+r.URL.Path, "", false))
+			_ = s.log(auditEntry(p, r.Method+" "+r.URL.Path, "", false))
 			writeErr(w, http.StatusForbidden, "peer "+p.String()+" ("+p.Node+") is not allowed to control this agent")
 			return
 		}

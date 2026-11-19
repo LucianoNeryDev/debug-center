@@ -48,12 +48,16 @@ func (s *Server) handleExec(w http.ResponseWriter, r *http.Request) {
 
 	cmd, op, desc, err := buildCommand(req)
 	if err != nil {
-		s.record(r, op, desc+" (rejected: "+err.Error()+")")
+		_ = s.record(r, op, desc+" (rejected: "+err.Error()+")", false)
 		_ = send(proto.ExecMessage{Type: proto.MsgExit, Code: -1, Error: err.Error()})
 		c.Close(websocket.StatusNormalClosure, "")
 		return
 	}
-	s.record(r, op, desc)
+	if err := s.record(r, op, desc, true); err != nil {
+		_ = send(proto.ExecMessage{Type: proto.MsgExit, Code: -1, Error: "refused, the request could not be audited: " + err.Error()})
+		c.Close(websocket.StatusNormalClosure, "")
+		return
+	}
 
 	code, runErr := runStreaming(ctx, c, cmd, req, send)
 	m := proto.ExecMessage{Type: proto.MsgExit, Code: code}

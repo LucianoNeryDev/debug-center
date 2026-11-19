@@ -20,7 +20,7 @@ func (s *Server) handleAgent(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleInfo(w http.ResponseWriter, r *http.Request) {
-	s.record(r, "info", "")
+	_ = s.record(r, "info", "", true)
 	si := sysinfo.Collect(r.Context())
 	si.Agent = s.info
 	writeJSON(w, si)
@@ -48,7 +48,7 @@ func (s *Server) handleStatsStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer c.CloseNow()
-	s.record(r, "stats.stream", interval.String())
+	_ = s.record(r, "stats.stream", interval.String(), true)
 	ctx := c.CloseRead(r.Context()) // cancelled when the controller goes away
 
 	var sm sysinfo.Sampler
@@ -90,7 +90,10 @@ func (s *Server) handleKill(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "bad pid")
 		return
 	}
-	s.record(r, "process.kill", strconv.FormatInt(pid, 10))
+	if err := s.record(r, "process.kill", strconv.FormatInt(pid, 10), true); err != nil {
+		refuse(w, err)
+		return
+	}
 	if err := sysinfo.Kill(r.Context(), int32(pid)); err != nil {
 		writeErr(w, http.StatusInternalServerError, err.Error())
 		return

@@ -6,10 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"runtime"
+	"strings"
 	"time"
 
 	"tailscale.com/client/local"
+	"tailscale.com/client/tailscale/apitype"
 	"tailscale.com/tsnet"
 
 	"git.lucianonery.dev/LucianoNeryDev/debug-center/internal/buildinfo"
@@ -35,6 +38,7 @@ type Server struct {
 	opts    Options
 	ts      *tsnet.Server
 	lc      *local.Client
+	whois   func(ctx context.Context, remoteAddr string) (*apitype.WhoIsResponse, error)
 	audit   *Audit
 	info    proto.AgentInfo
 	stopped chan struct{}
@@ -76,6 +80,7 @@ func Run(ctx context.Context, cfg *Config, opts Options) error {
 	if s.lc, err = s.ts.LocalClient(); err != nil {
 		return err
 	}
+	s.whois = s.lc.WhoIs
 	if opts.LogoutOnExit {
 		defer func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -133,8 +138,28 @@ func (s *Server) routes() http.Handler {
 	return mux
 }
 
-func (s *Server) record(r *http.Request, op, detail string) {
-	s.audit.Log(auditEntry(peerFrom(r.Context()), op, detail, true))
+// record writes the audit line for a request that passed authorization. ok is
+// false when the agent refuses the request anyway, such as an exec request
+// that does not resolve to a command. A non-nil error means the line was not
+// written: handlers that run commands or change files must then refuse the
+// operation (see refuse), while read-only handlers carry on.
+func (s *Server) record(r *http.Request, op, detail string, ok bool) error {
+	return s.log(auditEntry(peerFrom(r.Context()), op, detail, ok))
+}
+
+// log appends an audit entry and reports a failure on stderr.
+func (s *Server) log(e proto.AuditEntry) error {
+	err := s.audit.Log(e)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "dbc-agent: %s by %s: %v\n", strings.TrimSpace(e.Op+" "+e.Detail), e.Peer, err)
+	}
+	return err
+}
+
+// refuse answers a state-changing request whose audit line could not be
+// written. Nothing was done.
+func refuse(w http.ResponseWriter, err error) {
+	writeErr(w, http.StatusInternalServerError, "refused, the request could not be audited: "+err.Error())
 }
 
 func auditEntry(p Peer, op, detail string, ok bool) proto.AuditEntry {
@@ -157,7 +182,10 @@ func pid() int { return osGetpid() }
 // handleUninstall acknowledges, logs the node out of the tailnet and hands
 // over to OnUninstall, which removes the agent from the machine.
 func (s *Server) handleUninstall(w http.ResponseWriter, r *http.Request) {
-	s.record(r, "uninstall", "")
+	if err := s.record(r, "uninstall", "", true); err != nil {
+		refuse(w, err)
+		return
+	}
 	writeJSON(w, map[string]string{"status": "uninstalling"})
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()

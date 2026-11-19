@@ -25,3 +25,15 @@ Notable changes to Debug Center, by version.
 - Continuous integration on Forgejo Actions: every push is vetted, tested and
   built, and the run keeps the binaries for download. A `v*` tag publishes them
   as a release.
+- Tests for the agent's allowlist, command building, action argument quoting
+  and audit log.
+
+### Fixed
+
+- Exec requests the agent rejects, such as an unknown action or an
+  unsupported shell, are now recorded in the audit log with `allowed: false`
+  instead of `true`.
+- The agent no longer acts without an audit line. When the log cannot be
+  written, commands, actions, process kills, uploads and remote uninstalls are
+  refused with an error; read-only requests go ahead and the failure is
+  reported on stderr.
