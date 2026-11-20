@@ -3,7 +3,8 @@
 # per OS, each with SHA256SUMS); a v* tag also publishes them as a release.
 # Optional repository variables DBC_CONTROL_URL, DBC_ALLOW_PEERS and
 # DBC_AGENT_TAGS are baked into the agent (see scripts/build.sh). The binaries
-# are public, so never bake a pre-auth key into them.
+# are public, so never bake a pre-auth key into them. workflow_dispatch reruns
+# a branch after a failure outside the code, such as an artifact upload timeout.
 name: Build
 
 on:
@@ -11,6 +12,7 @@ on:
     branches: ["**"]
     tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
