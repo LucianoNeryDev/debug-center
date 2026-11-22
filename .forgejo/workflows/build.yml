@@ -2,8 +2,10 @@
 # request. Each run keeps the binaries on its run page as three artifacts (one
 # per OS, each with SHA256SUMS); a v* tag also publishes them as a release.
 # Optional repository variables DBC_CONTROL_URL, DBC_ALLOW_PEERS and
-# DBC_AGENT_TAGS are baked into the agent (see scripts/build.sh). The binaries
-# are public, so never bake a pre-auth key into them. workflow_dispatch reruns
+# DBC_AGENT_TAGS are baked into the agent (see scripts/build.sh). Only tag
+# builds also bake the DBC_AUTH_KEY secret, a key the tailnet ACL lets reach
+# nothing (docs/ci-cd.md), so a released agent installs with no flags. Branch
+# and pull request builds stay keyless. workflow_dispatch reruns
 # a branch after a failure outside the code, such as an artifact upload timeout.
 name: Build
 
@@ -38,6 +40,7 @@ jobs:
           DBC_CONTROL_URL: ${{ vars.DBC_CONTROL_URL }}
           DBC_ALLOW_PEERS: ${{ vars.DBC_ALLOW_PEERS }}
           DBC_AGENT_TAGS: ${{ vars.DBC_AGENT_TAGS }}
+          DBC_AUTH_KEY: ${{ github.ref_type == 'tag' && secrets.DBC_AUTH_KEY || '' }}
         run: |
           version="$(git describe --tags --always --dirty)"
           echo "VERSION=$version" >>"$GITHUB_ENV"
@@ -55,6 +58,7 @@ jobs:
           name: debug-center-${{ env.VERSION }}-linux
           path: |
             dist/*-linux-*
+            dist/install.sh
             dist/SHA256SUMS
 
       - uses: https://code.forgejo.org/forgejo/upload-artifact@v4
@@ -62,6 +66,7 @@ jobs:
           name: debug-center-${{ env.VERSION }}-macos
           path: |
             dist/*-darwin-*
+            dist/install.sh
             dist/SHA256SUMS
 
       - name: Publish the release
@@ -70,4 +75,11 @@ jobs:
         with:
           direction: upload
           release-dir: dist
-          release-notes: See CHANGELOG.md for what changed in ${{ github.ref_name }}.
+          release-notes: |
+            For the computer to be serviced (no setup needed; the installer asks the owner for consent):
+
+            - Windows: download `dbc-agent-windows-amd64.exe` (or `-arm64.exe`) and double-click it.
+            - macOS and Linux: in a terminal, run
+              `curl -fsSL https://git.lucianonery.dev/LucianoNeryDev/debug-center/releases/download/latest/install.sh | sh`
+
+            See CHANGELOG.md for what changed in ${{ github.ref_name }}.
