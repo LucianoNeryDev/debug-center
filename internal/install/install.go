@@ -35,6 +35,10 @@ func ServiceConfig(dir string) *service.Config {
 			"OnFailure":              "restart",
 			"OnFailureDelayDuration": "10s",
 			"Restart":                "always",
+			// launchd: start at boot and keep running (KeepAlive is already
+			// the library default; RunAtLoad is not).
+			"RunAtLoad": true,
+			"KeepAlive": true,
 		},
 	}
 }

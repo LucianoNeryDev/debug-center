@@ -2,15 +2,15 @@
 
 Notable changes to Debug Center, by version.
 
-## Unreleased
+## 0.1.0 — 2026-11-22
 
 ### Added
 
 - `dbc-agent`, the agent for Windows, Linux and macOS. It joins the support
-  tailnet under an identifiable name, installs as a service once the owner
-  consents and an administrator approves, and removes itself completely on
-  request, either on the machine or from the controller. `dbc-agent run` starts
-  a one-off session that cleans up when it ends.
+  tailnet under an identifiable name, installs as a service that starts at
+  boot once the owner consents and an administrator approves, and removes
+  itself completely on request, either on the machine or from the controller.
+  `dbc-agent run` starts a one-off session that cleans up when it ends.
 - What the agent offers: system inventory, live load, processes, remote
   commands with streamed output, a catalogue of diagnostic and repair actions
   for each OS, file transfer, and an audit log of every request. Only allowed
