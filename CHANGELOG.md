@@ -2,7 +2,7 @@
 
 Notable changes to Debug Center, by version.
 
-## Unreleased
+## 0.1.0 — 2026-11-22
 
 ### Added
 
