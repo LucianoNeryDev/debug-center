@@ -93,9 +93,13 @@ into the agent, so a customer can install it without flags:
 | `DBC_CONTROL_URL` | coordination server (Headscale) URL |
 | `DBC_ALLOW_PEERS` | comma-separated logins or `tag:` values allowed to control the agent |
 | `DBC_AGENT_TAGS` | comma-separated tags the agent advertises |
+| `DBC_AUTH_KEY` | pre-auth key, baked into `dbc-agent` only |
 
-Pre-auth keys are never baked in, because the binaries are public. Pass the key
-at install time with `--auth-key` or `DBC_AUTH_KEY`.
+Anything baked in can be read back out of the binary. Release builds bake in a
+key on purpose, so customers install with no flags; that key must be reusable,
+tagged, expiring and useless under the tailnet ACL, as described in
+[Builds and CI](docs/ci-cd.md#baked-in-settings). Otherwise pass the key at
+install time with `--auth-key` or `DBC_AUTH_KEY`.
 
 ## Usage
 
@@ -103,8 +107,14 @@ at install time with `--auth-key` or `DBC_AUTH_KEY`.
 
 Install the agent as a service. It asks for administrator rights (UAC on
 Windows, `sudo` elsewhere) and shows the owner what the technician will be able
-to do before asking for consent. On Windows, double-clicking the `.exe` starts
-the same install.
+to do before asking for consent. Starting the agent with no arguments, for
+example by double-clicking the `.exe` on Windows, starts the same install. A
+customer on macOS or Linux can fetch and start the newest release in one step
+([customer downloads](docs/ci-cd.md#customer-downloads)):
+
+```sh
+curl -fsSL https://git.lucianonery.dev/LucianoNeryDev/debug-center/releases/download/latest/install.sh | sh
+```
 
 ```sh
 dbc-agent install --name "Front desk" --auth-key tskey-... \

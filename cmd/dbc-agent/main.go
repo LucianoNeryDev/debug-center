@@ -41,9 +41,11 @@ func main() {
 		Run:   func(*cobra.Command, []string) { fmt.Println(buildinfo.Version) },
 	})
 
-	// Double-clicking the .exe on a customer machine should just start the install.
-	if runtime.GOOS == "windows" && len(os.Args) == 1 {
-		pause = true
+	// Starting the agent with no arguments, by double-clicking it or from a
+	// terminal, should just start the install. Windows closes the console when
+	// the program exits, so pause there to keep the result readable.
+	if len(os.Args) == 1 {
+		pause = runtime.GOOS == "windows"
 		root.SetArgs([]string{"install"})
 	}
 
@@ -85,6 +87,12 @@ func (f *tailnetFlags) register(cmd *cobra.Command) {
 	fl.StringVar(&f.name, "name", host, "name shown to the controller (customer, ticket or machine)")
 	fl.StringVar(&f.controlURL, "control-url", buildinfo.ControlURL, "coordination server (Headscale) URL")
 	fl.StringVar(&f.authKey, "auth-key", authKey, "pre-auth key for the first login (env DBC_AUTH_KEY)")
+	// Keep the key itself out of --help.
+	if os.Getenv("DBC_AUTH_KEY") != "" {
+		fl.Lookup("auth-key").DefValue = "from DBC_AUTH_KEY"
+	} else if authKey != "" {
+		fl.Lookup("auth-key").DefValue = "built in"
+	}
 	fl.StringSliceVar(&f.allow, "allow", buildinfo.List(buildinfo.AllowPeers), "tailnet logins or tag:… allowed to control this agent")
 	fl.StringSliceVar(&f.tags, "tag", buildinfo.List(buildinfo.AgentTags), "tags to advertise (the auth key must permit them)")
 	fl.IntVar(&f.port, "port", 0, "tailnet port to listen on (default 7420)")

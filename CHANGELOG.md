@@ -28,6 +28,10 @@ Notable changes to Debug Center, by version.
 - Tests for the agent's allowlist, command building, action argument quoting
   and audit log.
 - A README and contribution guide.
+- Releases a customer can install with no flags: release builds bake in a
+  pre-auth key kept harmless by the tailnet ACL, `dbc-agent` with no arguments
+  starts the install on every OS, and `install.sh` fetches, checks and installs
+  the newest agent on macOS and Linux in one command.
 
 ### Fixed
 
