@@ -2,6 +2,14 @@
 
 Notable changes to Debug Center, by version.
 
+## 0.1.1 — 2026-11-22
+
+### Fixed
+
+- Released agents join the tailnet again. 0.1.0 advertised `tag:dbc-agent` on
+  top of the tagged release key, which Headscale refuses; releases now leave
+  the tag to the key.
+
 ## 0.1.0 — 2026-11-22
 
 ### Added

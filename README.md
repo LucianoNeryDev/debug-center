@@ -92,7 +92,7 @@ into the agent, so a customer can install it without flags:
 | `VERSION` | version string (default: `git describe`) |
 | `DBC_CONTROL_URL` | coordination server (Headscale) URL |
 | `DBC_ALLOW_PEERS` | comma-separated logins or `tag:` values allowed to control the agent |
-| `DBC_AGENT_TAGS` | comma-separated tags the agent advertises |
+| `DBC_AGENT_TAGS` | comma-separated tags the agent advertises (empty with a tagged auth key) |
 | `DBC_AUTH_KEY` | pre-auth key, baked into `dbc-agent` only |
 
 Anything baked in can be read back out of the binary. Release builds bake in a

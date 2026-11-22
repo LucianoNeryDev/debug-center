@@ -35,7 +35,10 @@ agent, so a customer can install it without flags:
 - `DBC_CONTROL_URL`: the coordination server (Headscale) URL.
 - `DBC_ALLOW_PEERS`: comma-separated tailnet logins or `tag:` values allowed to
   control the agent.
-- `DBC_AGENT_TAGS`: comma-separated tags the agent advertises.
+- `DBC_AGENT_TAGS`: comma-separated tags the agent advertises. Leave it empty
+  when the auth key is tagged: the key already tags the node, and Headscale
+  refuses a node that joins with a tagged key and also requests tags
+  (`requested tags [...] are invalid or not permitted`).
 
 Release builds (`v*` tags) also bake in the `DBC_AUTH_KEY` Actions secret, so
 the released agent joins the tailnet with no flags at all. Branch and pull
